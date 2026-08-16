@@ -49,7 +49,7 @@ permet de retrouver (et de supprimer) le traitement associé.
 ### Procédure
 ```bash
 # 1. Récupérer le code
-git clone <url-du-dépôt>
+git clone https://github.com/remm699/word-template-app.git
 cd word-template-app
 
 # 2. Environnement virtuel + dépendances
