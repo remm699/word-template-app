@@ -44,8 +44,8 @@ ZimaOS est un OS à système racine en **lecture seule** : deux particularités
 ### Étape 1 — copier le projet sur le NAS
 ```bash
 # Depuis une machine du réseau local (les fichiers sont root-owned sur /DATA)
-scp -r word-template-app/* rem@192.168.0.49:/tmp/wta/
-ssh rem@192.168.0.49 "echo '<mot-de-passe>' | sudo -S mkdir -p /DATA/AppData/word-template-app && \
+scp -r word-template-app/* <utilisateur>@<ip-du-nas>:/tmp/wta/
+ssh <utilisateur>@<ip-du-nas> "echo '<mot-de-passe>' | sudo -S mkdir -p /DATA/AppData/word-template-app && \
   sudo mv /tmp/wta/* /DATA/AppData/word-template-app/"
 ```
 > **Alternative si `scp` vers `/tmp` est plus simple :** uploader via SFTP
@@ -73,7 +73,7 @@ sudo DOCKER_CONFIG=/tmp/docker-config docker compose -f docker-compose.yml up -d
 > l'environnement sinon) : `sudo VAR=val command`.
 
 ### Étape 4 — accès et premier traitement
-- Interface : **http://192.168.0.49:8092/** (adaptez l'IP)
+- Interface : **http://<ip-du-nas>:8092/** (adaptez l'IP)
 - Champ « dossier déjà présent sur le serveur » :
   `/documents/partage/Word` (le point de montage est `/documents`, la source
   NAS `/DATA/Documents`, puis votre arborescence) — traitement récursif.
