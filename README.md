@@ -109,4 +109,5 @@ librement (anciennes sessions de traitement).
 
 ## 📄 Licence
 
-À définir selon vos besoins (aucune licence n'est encore attribuée).
+Projet sous licence **MIT** — voir le fichier [LICENSE](LICENSE). Utilisation,
+modification et distribution libres, avec mention de l'auteur.
