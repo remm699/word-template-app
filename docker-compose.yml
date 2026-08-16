@@ -1,0 +1,29 @@
+# Word Template App — déploiement Docker Compose
+# Usage : docker compose up -d --build
+#
+# Réseau : accès via http://<ip-du-nas>:8092
+# Documents : /DATA/Documents (NAS) monté en LECTURE SEULE sur /documents
+#   → dans le champ « dossier déjà présent sur le serveur », saisir par
+#     exemple /documents/partage/Word
+# Persistance : les dossiers jobs/ et zips/ vivent dans des volumes nommés.
+
+services:
+  word-template-app:
+    build: .
+    image: word-template-app:latest
+    container_name: word-template-app
+    restart: unless-stopped
+    ports:
+      - "8092:8091"
+    volumes:
+      # Sources en lecture seule — les originaux ne sont JAMAIS modifiés
+      - /DATA/Documents:/documents:ro
+      # Persistance des traitements et archives
+      - wta_jobs:/app/jobs
+      - wta_zips:/app/zips
+    environment:
+      - TZ=Europe/Brussels
+
+volumes:
+  wta_jobs:
+  wta_zips:

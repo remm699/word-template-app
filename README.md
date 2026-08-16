@@ -66,6 +66,39 @@ python3 -m uvicorn app:app --host 0.0.0.0 --port 8091
 ### Accès
 Ouvrez dans un navigateur : `http://<ip-de-la-machine>:8091/`
 
+## 🐳 Déploiement Docker
+
+### Sur une machine classique
+```bash
+docker compose up -d --build
+# Accès : http://<ip-de-la-machine>:8092/
+```
+
+### Sur NAS ZimaOS / CasaOS (spécificités)
+ZimaOS a un système racine en **lecture seule** (`/root/.docker` ne peut pas être
+créé) et exige `sudo`. Préfixer les commandes avec `DOCKER_CONFIG` :
+
+```bash
+cd /DATA/AppData/word-template-app   # où le projet est déployé
+sudo DOCKER_CONFIG=/tmp/docker-config docker compose -f docker-compose.yml up -d --build
+```
+
+Le fichier `docker-compose.yml` monte automatiquement :
+- `/DATA/Documents` (les documents du NAS) sur `/documents` **en lecture seule** —
+  vos originaux ne peuvent pas être modifiés par le conteneur. Dans le champ
+  « dossier déjà présent sur le serveur », saisissez par exemple
+  `/documents/partage/Word` (traitement récursif).
+- Les dossiers `jobs/` et `zips/` dans des **volumes nommés** (`wta_jobs`,
+  `wta_zips`) — les traitements et archives survivent aux redémarrages.
+
+Gestion du conteneur : Portainer (présent sur le NAS) ou `docker ps` / `docker logs`.
+
+### Mise à jour
+```bash
+# Sur le NAS (après avoir copié la nouvelle version dans /DATA/AppData/word-template-app)
+sudo DOCKER_CONFIG=/tmp/docker-config docker compose -f docker-compose.yml up -d --build --force-recreate
+```
+
 ## 📡 API
 
 | Méthode | Route | Description |

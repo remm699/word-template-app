@@ -1,0 +1,14 @@
+# Données de traitement — jamais dans l'image
+jobs/
+zips/
+
+# Git / Python
+.git/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Divers
+.DS_Store
+*.log
