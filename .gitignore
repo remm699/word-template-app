@@ -1,0 +1,20 @@
+# Données de traitement — ne JAMAIS versionner
+# dossiers de travail des jobs (sources uploadées + sorties)
+jobs/
+# archives générées
+zips/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Environnement / secrets
+.env
+*.local
+
+# Système / éditeurs
+.DS_Store
+*.log

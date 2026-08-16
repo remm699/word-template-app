@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Template App — Appliquer un modèle .dotx</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --ok: #16a34a;
+    --err: #dc2626;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 { font-size: 26px; font-weight: 700; }
+  header h1 span { color: var(--primary); }
+  header p { color: var(--muted); margin-top: 6px; font-size: 14px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Zones de dépôt */
+  .dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 28px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    background: #f8fafc;
+  }
+  .dropzone:hover, .dropzone.drag {
+    border-color: var(--primary);
+    background: #eff6ff;
+  }
+  .dropzone .icon { font-size: 32px; display: block; margin-bottom: 8px; }
+  .dropzone .main { font-weight: 600; font-size: 15px; }
+  .dropzone .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .dropzone input[type=file] { display: none; }
+
+  .pill-list {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pill {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: var(--primary-dark);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+  .pill .x { cursor: pointer; margin-left: 6px; font-weight: 700; opacity: .6; }
+  .pill .x:hover { opacity: 1; }
+
+  /* Formulaire */
+  label.field-label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: #334155; }
+  label.field-label:first-of-type { margin-top: 0; }
+  input[type=text], input[type=number] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  input[type=text]:focus { outline: 2px solid #bfdbfe; border-color: var(--primary); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .checkbox-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); }
+  .checkbox-row .chk-label { font-weight: 600; font-size: 14px; }
+  .checkbox-row .chk-sub { font-size: 12px; color: var(--muted); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .row-2 { grid-template-columns: 1fr; } }
+
+  button.primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.primary:hover { background: var(--primary-dark); }
+  button.primary:disabled { background: #94a3b8; cursor: not-allowed; }
+
+  /* Progression */
+  .progress-box { display: none; margin-top: 16px; }
+  .progress-bar {
+    height: 10px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary), #22d3ee);
+    transition: width .3s;
+  }
+  .progress-text { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  /* Résultats */
+  .results { display: none; margin-top: 14px; }
+  .results h3 { font-size: 15px; margin-bottom: 10px; }
+  .result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 4px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+  }
+  .result-item.ok { border-left: 4px solid var(--ok); }
+  .result-item.err { border-left: 4px solid var(--err); }
+  .result-item .st { font-weight: 700; width: 50px; flex-shrink: 0; }
+  .result-item.ok .st { color: var(--ok); }
+  .result-item.err .st { color: var(--err); }
+  .result-item .rel { flex: 1; word-break: break-all; }
+  .result-item .steps { color: var(--muted); font-size: 12px; }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 12px 20px;
+    background: var(--ok);
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .download-btn:hover { filter: brightness(1.08); }
+  .download-btn.big {
+    font-size: 16px;
+    padding: 16px 26px;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+  }
+
+  .dl-main { text-align: center; padding: 8px 0 4px; }
+  .dl-section-title { font-size: 14px; font-weight: 600; margin: 18px 0 10px; color: #334155; }
+  .dl-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: #f8fafc;
+  }
+  .dl-item .dl-icon { font-size: 20px; }
+  .dl-item .dl-info { flex: 1; min-width: 0; }
+  .dl-item .dl-name { font-weight: 600; font-size: 13px; word-break: break-all; }
+  .dl-item .dl-meta { font-size: 12px; color: var(--muted); }
+  .dl-item a {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .dl-item a:hover { background: var(--primary-dark); }
+  .dl-item .dl-delete {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: var(--err);
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .dl-item .dl-delete:hover { background: #fee2e2; }
+
+  .error-banner {
+    display: none;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: var(--err);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 28px; }
+  .inline-btn {
+    background: none; border: none; color: var(--primary);
+    font-weight: 600; cursor: pointer; font-size: 13px; text-decoration: underline;
+    margin-left: 8px;
+  }
+  .fold { display: none; }
+  .clear-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: var(--err);
+    font-weight: 600;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .clear-btn:hover { background: #fee2e2; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📄 Word <span>Template</span> App</h1>
+    <p>Applique la mise en page d'un modèle <strong>.dotx</strong> à vos documents <strong>.docx</strong> — fichiers ou dossiers, récursif.</p>
+  </header>
+
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- 1. Modèle -->
+  <div class="card">
+    <h2><span class="step-badge">1</span> Modèle Word (.dotx) <button class="clear-btn" id="clearModelBtn" style="display:none">🧹 Vider</button></h2>
+    <div class="dropzone" id="dzModel">
+      <span class="icon">📋</span>
+      <div class="main">Déposez le modèle .dotx ici ou cliquez</div>
+      <div class="sub">C'est lui qui impose : styles, en-tête/logo, pied de page, marges, page</div>
+      <input type="file" id="modelInput" accept=".dotx">
+    </div>
+    <div class="file-list" id="modelList"></div>
+  </div>
+
+  <!-- 2. Documents -->
+  <div class="card">
+    <h2><span class="step-badge">2</span> Documents à traiter (.docx) <button class="clear-btn" id="clearDocsBtn" style="display:none">🧹 Vider</button></h2>
+    <div class="dropzone" id="dzDocs">
+      <span class="icon">📁</span>
+      <div class="main">Glissez des fichiers <strong>ou un dossier complet</strong></div>
+      <div class="sub">Un dossier entier est parcouru récursivement (sous-dossiers inclus) — structure préservée</div>
+      <input type="file" id="docsInput" multiple webkitdirectory>
+    </div>
+    <div class="file-list" id="docsList"></div>
+
+    <label class="field-label">— ou dossier déjà présent sur le serveur (chemin local) —</label>
+    <input type="text" id="localDir" placeholder="ex : /mnt/partage/Word  (traité récursivement)">
+    <div class="hint">Laissez vide si vous utilisez l'upload ci-dessus. Les documents locaux ne sont pas modifiés : les résultats vont dans le dossier de sortie du job.</div>
+  </div>
+
+  <!-- 3. Police -->
+  <div class="card">
+    <h2><span class="step-badge">3</span> Police à appliquer / intégrer</h2>
+    <div class="row-2">
+      <div>
+        <label class="field-label">Nom de la police</label>
+        <input type="text" id="fontName" placeholder="ex : Poppins (laisser vide = polices du modèle)">
+      </div>
+      <div>
+        <label class="field-label">Dossier de polices .ttf sur le serveur <em>(optionnel)</em></label>
+        <input type="text" id="fontDir" placeholder="ex : /data/polices">
+        <div class="hint">Si vide et police = Poppins, les .ttf Poppins du serveur sont utilisés automatiquement.</div>
+      </div>
+    </div>
+
+    <div class="checkbox-row" id="embedRow">
+      <input type="checkbox" id="embedChk">
+      <div>
+        <div class="chk-label">💾 Intégrer (embed) la police dans les documents</div>
+        <div class="chk-sub">Les polices sont enregistrées dans chaque .docx → rendu identique partout (fichiers plus volumineux).</div>
+      </div>
+    </div>
+
+    <div class="fold" id="fontUploadFold">
+      <label class="field-label">… ou uploader directement les fichiers .ttf de la police</label>
+      <div class="dropzone" id="dzFonts">
+        <span class="icon">🔤</span>
+        <div class="main">Glissez les fichiers <strong>.ttf</strong> de la police</div>
+        <div class="sub">Cliquez ou déposez (plusieurs autorisés : Regular, Bold, Italic…)</div>
+        <input type="file" id="fontsInput" multiple accept=".ttf">
+      </div>
+      <div class="file-list" id="fontsList"></div>
+    </div>
+  </div>
+
+  <!-- 4. Lancer -->
+  <div class="card">
+    <h2><span class="step-badge">4</span> Lancer le traitement</h2>
+    <button class="primary" id="runBtn" disabled>🚀 Appliquer le modèle</button>
+    <div class="progress" id="progress">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">En attente…</div>
+    </div>
+    <div class="results" id="results">
+      <h3>Résultats</h3>
+      <div id="resultsList"></div>
+    </div>
+  </div>
+
+  <!-- 5. Téléchargements -->
+  <div class="card">
+    <h2><span class="step-badge">5</span> <span id="dlTitle">Télécharger le dossier des fichiers modifiés</span></h2>
+    <div class="dl-main" id="dlMain" style="display:none">
+      <a class="download-btn big" id="downloadBtn" href="#">⬇️ Télécharger le dossier complet (zip)</a>
+      <div class="hint" id="dlHint"></div>
+    </div>
+    <div class="hint" id="dlEmpty" style="display:block">⬆️ Lancez un traitement pour générer une archive .zip des documents modifiés.</div>
+    <h3 class="dl-section-title" id="dlSectionTitle" style="display:none">Archives déjà générées</h3>
+    <div id="downloadsList"></div>
+  </div>
+
+  <footer>Les originaux ne sont jamais modifiés — les résultats sont générés dans un dossier séparé et téléchargeables en .zip.</footer>
+</div>
+
+<script>
+// ---------- état global ----------
+const modFiles = { model: null, docs: [], fonts: [] };
+
+function fmtSize(n) {
+  if (n > 1<<20) return (n/1048576).toFixed(1) + ' Mo';
+  if (n > 1024) return (n/1024).toFixed(0) + ' Ko';
+  return n + ' o';
+}
+
+function showError(msg) {
+  const b = document.getElementById('errorBanner');
+  b.textContent = '⚠️ ' + msg;
+  b.style.display = 'block';
+}
+
+function addModel(fileList) {
+  // reçoit une FileList (du <input> ou du drag&drop) — prend le premier fichier
+  const file = fileList[0] || fileList;
+  if (!file || !file.name) return;
+  if (!file.name.toLowerCase().endsWith('.dotx')) { showError('Le modèle doit être un fichier .dotx'); return; }
+  modFiles.model = { name: file.name, file: file };
+  renderModel();
+}
+
+function renderModel() {
+  const el = document.getElementById('modelList');
+  el.innerHTML = '';
+  if (modFiles.model) {
+    const p = document.createElement('span');
+    p.className = 'pill';
+    p.textContent = '📋 ' + modFiles.model.name + ' (' + fmtSize(modFiles.model.file.size) + ') ';
+    const x = document.createElement('span');
+    x.className = 'x'; x.textContent = '✕';
+    x.onclick = () => { modFiles.model = null; renderModel(); };
+    p.appendChild(x);
+    el.appendChild(p);
+  }
+  updateRunBtn();
+}
+
+function addDocs(fileList) {
+  for (const f of fileList) {
+    if (!f.name.toLowerCase().endsWith('.docx')) continue;
+    // webkitRelativePath préserve la structure du dossier
+    const rel = f.webkitRelativePath || f.name;
+    if (modFiles.docs.some(d => d.rel === rel)) continue;
+    modFiles.docs.push({ name: f.name, rel: rel, file: f });
+  }
+  renderDocs();
+}
+function renderDocs() {
+  const el = document.getElementById('docsList');
+  el.innerHTML = '';
+  for (const d of modFiles.docs) {
+    const p = document.createElement('span');
+    p.className = 'pill';
+    p.textContent = '📄 ' + (d.rel.includes('/') ? '…/' + d.rel.split('/').slice(-2).join('/') : d.rel);
+    p.title = d.rel;
+    const x = document.createElement('span');
+    x.className = 'x'; x.textContent = '✕';
+    x.onclick = () => {
+      modFiles.docs = modFiles.docs.filter(o => o.rel !== d.rel);
+      renderDocs();
+    };
+    p.appendChild(x);
+    el.appendChild(p);
+  }
+  if (modFiles.docs.length) {
+    const total = modFiles.docs.reduce((a, d) => a + d.file.size, 0);
+    const info = document.createElement('div');
+    info.className = 'hint';
+    info.textContent = modFiles.docs.length + ' document(s) .docx — ' + fmtSize(total) + ' (dossiers et sous-dossiers inclus)';
+    el.appendChild(info);
+  }
+  updateRunBtn();
+}
+function addFonts(fileList) {
+  for (const f of fileList) {
+    if (!f.name.toLowerCase().endsWith('.ttf')) continue;
+    if (modFiles.fonts.some(o => o.name === f.name)) continue;
+    modFiles.fonts.push({ name: f.name, file: f });
+  }
+  renderFonts();
+}
+function renderFonts() {
+  const el = document.getElementById('fontsList');
+  el.innerHTML = '';
+  for (const f of modFiles.fonts) {
+    const p = document.createElement('span');
+    p.className = 'pill';
+    p.textContent = '🔤 ' + f.name;
+    p.appendChild(elx(() => { modFiles.fonts = modFiles.fonts.filter(o => o.name !== f.name); renderFonts(); }));
+    el.appendChild(p);
+  }
+}
+function elx(onclick) {
+  const s = document.createElement('span');
+  s.className = 'x'; s.textContent = '✕';
+  s.onclick = onclick;
+  return s;
+}
+
+/* payload multipart : modèle + documents + relpaths + options + polices */
+function buildPayload() {
+  const fd = new FormData();
+  fd.append('model', modFiles.model.file, modFiles.model.file.name);
+  const rels = [];
+  modFiles.docs.forEach((d, i) => {
+    fd.append('files', d.file, 'doc_' + i + '.docx');
+    rels.push(d.rel);
+  });
+  fd.append('relpaths', JSON.stringify(rels));
+  fd.append('local_dir', document.getElementById('localDir').value.trim());
+  fd.append('font_name', document.getElementById('fontName').value.trim());
+  fd.append('embed', document.getElementById('embedChk').checked ? 'true' : 'false');
+  fd.append('local_font_dir', document.getElementById('fontDir').value.trim());
+  modFiles.fonts.forEach(f => fd.append('font_files', f.file, f.name));
+  return fd;
+}
+
+function updateRunBtn() {
+  const ok = !!modFiles.model && (modFiles.docs.length > 0 || document.getElementById('localDir').value.trim());
+  document.getElementById('runBtn').disabled = !ok;
+  syncClearBtns();
+}
+
+/* affiche « 🧹 Vider » seulement si le champ contient quelque chose */
+function syncClearBtns() {
+  document.getElementById('clearModelBtn').style.display = modFiles.model ? 'inline-flex' : 'none';
+  const dir = document.getElementById('localDir').value.trim();
+  document.getElementById('clearDocsBtn').style.display =
+    (modFiles.docs.length > 0 || dir) ? 'inline-flex' : 'none';
+}
+
+/* vide complètement le champ modèle */
+document.getElementById('clearModelBtn').addEventListener('click', () => {
+  modFiles.model = null;
+  document.getElementById('modelInput').value = '';
+  renderModel();
+});
+
+/* vide complètement le champ documents (fichiers uploadés + dossier serveur) */
+document.getElementById('clearDocsBtn').addEventListener('click', () => {
+  modFiles.docs = [];
+  document.getElementById('docsInput').value = '';
+  document.getElementById('localDir').value = '';
+  renderDocs();
+});
+
+/* ---------- dropzones ---------- */
+function bindDropzone(dzId, inputId, cb) {
+  const dz = document.getElementById(dzId);
+  const inp = document.getElementById(inputId);
+  dz.addEventListener('click', () => inp.click());
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag');
+    cb(e.dataTransfer.files);
+  });
+  inp.addEventListener('change', () => { cb(inp.files); inp.value = ''; });
+}
+bindDropzone('dzModel', 'modelInput', addModel);
+bindDropzone('dzDocs', 'docsInput', addDocs);
+bindDropzone('dzFonts', 'fontsInput', addFonts);
+
+document.getElementById('localDir').addEventListener('input', updateRunBtn);
+
+/* checkbox police -> afficher l'upload .ttf */
+const embedChk = document.getElementById('embedChk');
+const fontFold = document.getElementById('fontUploadFold');
+function syncEmbed() { fontFold.style.display = embedChk.checked ? 'block' : 'none'; }
+embedChk.addEventListener('change', syncEmbed);
+syncEmbed();
+
+/* ------------------ envoi + suivi ------------------ */
+let pollTimer = null;
+let currentJobId = null;
+
+async function run() {
+  const btn = document.getElementById('runBtn');
+  const errBanner = document.getElementById('errorBanner');
+  errBanner.style.display = 'none';
+  const prog = document.getElementById('progress');
+  const res = document.getElementById('results');
+  prog.style.display = 'block';
+  res.style.display = 'none';
+  document.getElementById('downloadBtn').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressText').textContent = 'Upload en cours…';
+  btn.disabled = true;
+  btn.textContent = '⏳ Traitement en cours…';
+
+  try {
+    const fd = buildPayload();
+    const r = await fetch('/api/process', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data.detail && typeof data.detail === 'string') ? data.detail : 'Erreur ' + r.status);
+    currentJobId = data.job_id;
+    pollTimer = setInterval(() => poll(currentJobId), 800);
+  } catch (e) {
+    errBanner.textContent = '❌ ' + e.message;
+    errBanner.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '🚀 Appliquer le modèle';
+    document.getElementById('progress').style.display = 'none';
+  }
+}
+
+async function poll(jobId) {
+  try {
+    const r = await fetch('/api/job/' + jobId);
+    const j = await r.json();
+    const fill = document.getElementById('progressFill');
+    const txt = document.getElementById('progressText');
+    if (j.total > 0) fill.style.width = Math.round(100 * j.done / j.total) + '%';
+    if (j.status === 'running') {
+      txt.textContent = 'Traitement : ' + j.done + '/' + j.total + (j.current ? ' — ' + j.current : '');
+    } else if (j.status === 'done') {
+      clearInterval(pollTimer);
+      fill.style.width = '100%';
+      txt.textContent = '✅ Terminé : ' + j.done + '/' + j.total + ' documents traités';
+      showResults(jobId, j);
+    } else if (j.status === 'error') {
+      clearInterval(pollTimer);
+      txt.textContent = '❌ Erreur';
+      errBanner(j.error || 'Erreur inconnue');
+      resetBtn();
+    }
+  } catch (e) {
+    /* réessai à la prochaine itération */
+  }
+}
+
+function errBanner(msg) {
+  const b = document.getElementById('errorBanner');
+  b.textContent = '❌ ' + msg;
+  b.style.display = 'block';
+}
+function resetBtn() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = false;
+  btn.textContent = '🚀 Appliquer le modèle';
+}
+
+function showResults(jobId, j) {
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+  const okN = j.results.filter(x => x.ok).length;
+  const errN = j.results.length - okN;
+  const head = document.createElement('div');
+  head.className = 'hint';
+  head.textContent = '✅ ' + okN + ' réussi(s)' + (errN ? ' — ❌ ' + errN + ' en échec' : '');
+  list.appendChild(head);
+  for (const x of j.results) {
+    const d = document.createElement('div');
+    d.className = 'result-item ' + (x.ok ? 'ok' : 'err');
+    const st = document.createElement('span');
+    st.className = 'st';
+    st.textContent = x.ok ? 'OK' : 'NOK';
+    const rel = document.createElement('span');
+    rel.className = 'rel';
+    rel.textContent = x.rel;
+    rel.title = x.rel;
+    d.appendChild(st); d.appendChild(rel);
+    if (!x.ok) {
+      const e = document.createElement('span');
+      e.className = 'steps';
+      e.textContent = x.error;
+      d.appendChild(e);
+    }
+    list.appendChild(d);
+  }
+  document.getElementById('results').style.display = 'block';
+  resetBtn();
+  refreshDownloads();   // met à jour la section Téléchargements
+}
+
+/* ---------- section Téléchargements ---------- */
+
+async function deleteArchive(name) {
+  if (!confirm('🗑️ Supprimer l\'archive « ' + name + ' » ?\n\nLe dossier du job associé (sources uploadées + fichiers de résultats) sera également supprimé s\'il est encore en mémoire.')) {
+    return;
+  }
+  try {
+    const r = await fetch('/api/download/' + encodeURIComponent(name), { method: 'DELETE' });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      errBanner(data.detail || 'Erreur lors de la suppression (' + r.status + ')');
+      return;
+    }
+    await refreshDownloads();
+  } catch (e) {
+    errBanner('Erreur lors de la suppression : ' + e.message);
+  }
+}
+
+async function refreshDownloads() {
+  try {
+    const r = await fetch('/api/downloads');
+    const items = await r.json();
+    const dlMain = document.getElementById('dlMain');
+    const dlEmpty = document.getElementById('dlEmpty');
+    const dlBtn = document.getElementById('downloadBtn');
+    const dlHint = document.getElementById('dlHint');
+    const dlTitle = document.getElementById('dlSectionTitle');
+    const list = document.getElementById('downloadsList');
+
+    if (items.length) {
+      dlMain.style.display = 'block';
+      dlEmpty.style.display = 'none';
+      // bouton principal -> archive la plus récente
+      dlBtn.href = '/api/download/' + encodeURIComponent(items[0].name);
+      dlHint.textContent = items[0].name + ' — ' + fmtSize(items[0].size) +
+        ' (' + new Date(items[0].mtime * 1000).toLocaleString('fr-FR') + ')';
+      // historique
+      dlTitle.style.display = 'block';
+      list.innerHTML = '';
+      for (const it of items) {
+        const row = document.createElement('div');
+        row.className = 'dl-item';
+        const icon = document.createElement('span');
+        icon.className = 'dl-icon'; icon.textContent = '🗜️';
+        const info = document.createElement('span');
+        info.className = 'dl-info';
+        const name = document.createElement('div');
+        name.className = 'dl-name'; name.textContent = it.name;
+        const meta = document.createElement('div');
+        meta.className = 'dl-meta';
+        meta.textContent = fmtSize(it.size) + ' — ' + new Date(it.mtime * 1000).toLocaleString('fr-FR');
+        info.appendChild(name); info.appendChild(meta);
+        const a = document.createElement('a');
+        a.href = '/api/download/' + encodeURIComponent(it.name);
+        a.textContent = '⬇️ Télécharger';
+        const del = document.createElement('button');
+        del.className = 'dl-delete';
+        del.textContent = '🗑️';
+        del.title = 'Supprimer cette archive et son dossier (sources + résultats)';
+        del.addEventListener('click', async () => {
+          await deleteArchive(it.name);
+        });
+        row.appendChild(icon); row.appendChild(info); row.appendChild(a); row.appendChild(del);
+        list.appendChild(row);
+      }
+    } else {
+      dlMain.style.display = 'none';
+      dlEmpty.style.display = 'block';
+      dlTitle.style.display = 'none';
+      list.innerHTML = '';
+    }
+  } catch (e) {
+    /* silencieux */
+  }
+}
+
+document.getElementById('runBtn').addEventListener('click', run);
+refreshDownloads();   // au chargement : affiche les archives existantes
+</script>
+</body>
+</html>
