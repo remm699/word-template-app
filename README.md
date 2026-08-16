@@ -68,6 +68,9 @@ Ouvrez dans un navigateur : `http://<ip-de-la-machine>:8091/`
 
 ## 🐳 Déploiement Docker
 
+> 📖 **Guide d'installation complet pas à pas** : [docs/docker-install.md](docs/docker-install.md)
+> (machine classique, NAS ZimaOS, mise à jour, sauvegarde, dépannage).
+
 ### Sur une machine classique
 ```bash
 docker compose up -d --build
